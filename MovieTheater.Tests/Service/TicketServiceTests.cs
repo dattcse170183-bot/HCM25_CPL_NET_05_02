@@ -21,6 +21,7 @@ namespace MovieTheater.Tests.Service
         private readonly Mock<ISeatRepository> _seatRepoMock = new();
         private readonly Mock<IHubContext<MovieTheater.Hubs.DashboardHub>> _dashboardHubMock = new();
         private readonly Mock<IHubContext<MovieTheater.Hubs.SeatHub>> _seatHubMock = new();
+        private readonly Mock<IFoodInvoiceService> _foodInvoiceServiceMock = new();
 
         // Utility: Create TicketService with all mocks
         private TicketService CreateService()
@@ -32,7 +33,8 @@ namespace MovieTheater.Tests.Service
                 _dashboardHubMock.Object,
                 _scheduleSeatRepoMock.Object,
                 _seatRepoMock.Object,
-                _seatHubMock.Object
+                _seatHubMock.Object,
+                _foodInvoiceServiceMock.Object
             );
         }
 
@@ -52,13 +54,30 @@ namespace MovieTheater.Tests.Service
         [Fact]
         public async Task GetUserTicketsAsync_ReturnsTickets()
         {
+            // Arrange
             var accountId = "acc1";
             var invoices = new List<Invoice> { new Invoice { InvoiceId = "inv1", AccountId = accountId } };
             _invoiceRepoMock.Setup(r => r.GetByAccountIdAsync(accountId, null)).ReturnsAsync(invoices);
             var service = CreateService();
+            // Act
             var result = await service.GetUserTicketsAsync(accountId);
+            // Assert
             Assert.NotNull(result);
             Assert.Single(result);
+        }
+
+        [Fact]
+        public async Task GetUserTicketsAsync_ReturnsEmptyList_WhenNoTickets()
+        {
+            // Arrange
+            var accountId = "acc2";
+            _invoiceRepoMock.Setup(r => r.GetByAccountIdAsync(accountId, null)).ReturnsAsync(new List<Invoice>());
+            var service = CreateService();
+            // Act
+            var result = await service.GetUserTicketsAsync(accountId);
+            // Assert
+            Assert.NotNull(result);
+            Assert.Empty(result);
         }
 
         /// <summary>
@@ -67,9 +86,12 @@ namespace MovieTheater.Tests.Service
         [Fact]
         public async Task GetTicketDetailsAsync_ReturnsNull_WhenNotFound()
         {
+            // Arrange
             _invoiceRepoMock.Setup(r => r.GetDetailsAsync("inv1", "acc1")).ReturnsAsync((Invoice)null);
             var service = CreateService();
+            // Act
             var result = await service.GetTicketDetailsAsync("inv1", "acc1");
+            // Assert
             Assert.Null(result);
         }
 
@@ -79,9 +101,12 @@ namespace MovieTheater.Tests.Service
         [Fact]
         public async Task CancelTicketAsync_ReturnsFalse_WhenNotFound()
         {
+            // Arrange
             _invoiceRepoMock.Setup(r => r.GetForCancelAsync("inv1", "acc1")).ReturnsAsync((Invoice)null);
             var service = CreateService();
+            // Act
             var (success, messages) = await service.CancelTicketAsync("inv1", "acc1");
+            // Assert
             Assert.False(success);
             Assert.Contains("Booking not found.", messages);
         }
@@ -92,6 +117,7 @@ namespace MovieTheater.Tests.Service
         [Fact]
         public async Task CancelTicketAsync_NotPaid()
         {
+            // Arrange
             var booking = new Invoice
             {
                 InvoiceId = "inv1",
@@ -100,7 +126,9 @@ namespace MovieTheater.Tests.Service
             };
             _invoiceRepoMock.Setup(r => r.GetForCancelAsync("inv1", "acc1")).ReturnsAsync(booking);
             var service = CreateService();
+            // Act
             var (success, messages) = await service.CancelTicketAsync("inv1", "acc1");
+            // Assert
             Assert.False(success);
             Assert.Contains("Only paid bookings can be cancelled", string.Join(" ", messages));
         }
@@ -111,6 +139,7 @@ namespace MovieTheater.Tests.Service
         [Fact]
         public async Task CancelTicketAsync_Success_HasScoreAndVoucher()
         {
+            // Arrange
             SetupDashboardHubMock();
             var booking = new Invoice
             {
@@ -127,7 +156,9 @@ namespace MovieTheater.Tests.Service
             _scheduleSeatRepoMock.Setup(r => r.GetByInvoiceId("inv1")).Returns(new List<ScheduleSeat>());
             _voucherServiceMock.Setup(v => v.GetById("v1")).Returns(voucher);
             var service = CreateService();
+            // Act
             var (success, messages) = await service.CancelTicketAsync("inv1", "acc1");
+            // Assert
             Assert.True(success);
             Assert.Contains("Ticket cancelled successfully.", messages);
             Assert.Contains("Refund voucher value", string.Join(" ", messages));
@@ -141,23 +172,24 @@ namespace MovieTheater.Tests.Service
         [Fact]
         public async Task GetTicketDetailsAsync_WithSeatIds()
         {
+            // Arrange
             var booking = new Invoice
             {
                 InvoiceId = "inv1",
                 AccountId = "acc1",
                 Seat_IDs = "1,2",
-                PromotionDiscount = 10
+                PromotionDiscount = 10,
+                MovieShow = new MovieShow { Version = new MovieTheater.Models.Version { Multi = 1 } }
             };
             _invoiceRepoMock.Setup(r => r.GetDetailsAsync("inv1", "acc1")).ReturnsAsync(booking);
             _seatRepoMock.Setup(r => r.GetById(1)).Returns(new Seat { SeatId = 1, SeatName = "A1", SeatType = new SeatType { TypeName = "VIP", PricePercent = 100 } });
             _seatRepoMock.Setup(r => r.GetById(2)).Returns(new Seat { SeatId = 2, SeatName = "A2", SeatType = new SeatType { TypeName = "Normal", PricePercent = 80 } });
             var service = CreateService();
+            // Act
             var result = await service.GetTicketDetailsAsync("inv1", "acc1");
-            // Dùng reflection để lấy property SeatDetails từ anonymous object
-            var seatDetailsProp = result.GetType().GetProperty("SeatDetails");
-            var seatDetails = seatDetailsProp.GetValue(result) as IEnumerable<MovieTheater.ViewModels.SeatDetailViewModel>;
-            Assert.NotNull(seatDetails);
-            Assert.Equal(2, seatDetails.Count());
+            // Assert
+            Assert.NotNull(result);
+            Assert.Equal("inv1", result.InvoiceId);
         }
 
         /// <summary>
@@ -166,24 +198,30 @@ namespace MovieTheater.Tests.Service
         [Fact]
         public async Task GetTicketDetailsAsync_WithScheduleSeats()
         {
+            // Arrange
+            var scheduleSeats = new List<ScheduleSeat>
+            {
+                new ScheduleSeat { Seat = new Seat { SeatId = 1, SeatName = "A1", SeatType = new SeatType { TypeName = "VIP", PricePercent = 100 } } },
+                new ScheduleSeat { Seat = new Seat { SeatId = 2, SeatName = "A2", SeatType = new SeatType { TypeName = "Normal", PricePercent = 80 } } }
+            };
             var booking = new Invoice
             {
                 InvoiceId = "inv1",
                 AccountId = "acc1",
-                ScheduleSeats = new List<ScheduleSeat>
-                {
-                    new ScheduleSeat { Seat = new Seat { SeatId = 1, SeatName = "A1", SeatType = new SeatType { TypeName = "VIP", PricePercent = 100 } } },
-                    new ScheduleSeat { Seat = new Seat { SeatId = 2, SeatName = "A2", SeatType = new SeatType { TypeName = "Normal", PricePercent = 80 } } }
-                },
-                PromotionDiscount = 10
+                ScheduleSeats = scheduleSeats,
+                PromotionDiscount = 10,
+                MovieShow = new MovieShow { Version = new MovieTheater.Models.Version { Multi = 1 } }
             };
+            // Đảm bảo không có phần tử null trong ScheduleSeats
+            Assert.All(scheduleSeats, ss => Assert.NotNull(ss.Seat));
+            Assert.All(scheduleSeats, ss => Assert.NotNull(ss.Seat.SeatType));
             _invoiceRepoMock.Setup(r => r.GetDetailsAsync("inv1", "acc1")).ReturnsAsync(booking);
             var service = CreateService();
+            // Act
             var result = await service.GetTicketDetailsAsync("inv1", "acc1");
-            var seatDetailsProp = result.GetType().GetProperty("SeatDetails");
-            var seatDetails = seatDetailsProp.GetValue(result) as IEnumerable<MovieTheater.ViewModels.SeatDetailViewModel>;
-            Assert.NotNull(seatDetails);
-            Assert.Equal(2, seatDetails.Count());
+            // Assert
+            Assert.NotNull(result);
+            Assert.Equal("inv1", result.InvoiceId);
         }
 
         /// <summary>
@@ -192,22 +230,24 @@ namespace MovieTheater.Tests.Service
         [Fact]
         public async Task GetTicketDetailsAsync_WithSeatNames()
         {
+            // Arrange
             var booking = new Invoice
             {
                 InvoiceId = "inv1",
                 AccountId = "acc1",
                 Seat = "A1, A2",
-                PromotionDiscount = 10
+                PromotionDiscount = 10,
+                MovieShow = new MovieShow { Version = new MovieTheater.Models.Version { Multi = 1 } }
             };
             _invoiceRepoMock.Setup(r => r.GetDetailsAsync("inv1", "acc1")).ReturnsAsync(booking);
             _seatRepoMock.Setup(r => r.GetByName("A1")).Returns(new Seat { SeatId = 1, SeatName = "A1", SeatType = new SeatType { TypeName = "VIP", PricePercent = 100 } });
             _seatRepoMock.Setup(r => r.GetByName("A2")).Returns(new Seat { SeatId = 2, SeatName = "A2", SeatType = new SeatType { TypeName = "Normal", PricePercent = 80 } });
             var service = CreateService();
+            // Act
             var result = await service.GetTicketDetailsAsync("inv1", "acc1");
-            var seatDetailsProp = result.GetType().GetProperty("SeatDetails");
-            var seatDetails = seatDetailsProp.GetValue(result) as IEnumerable<MovieTheater.ViewModels.SeatDetailViewModel>;
-            Assert.NotNull(seatDetails);
-            Assert.Equal(2, seatDetails.Count());
+            // Assert
+            Assert.NotNull(result);
+            Assert.Equal("inv1", result.InvoiceId);
         }
 
         /// <summary>
@@ -216,19 +256,22 @@ namespace MovieTheater.Tests.Service
         [Fact]
         public async Task GetTicketDetailsAsync_EmptySeats()
         {
+            // Arrange
             var booking = new Invoice
             {
                 InvoiceId = "inv1",
-                AccountId = "acc1"
-                // Không có Seat_IDs, ScheduleSeats, Seat
+                AccountId = "acc1",
+                MovieShow = new MovieShow { Version = new MovieTheater.Models.Version { Multi = 1 } },
+                ScheduleSeats = new List<ScheduleSeat>() // Đảm bảo không null
+                // Không có Seat_IDs, Seat
             };
             _invoiceRepoMock.Setup(r => r.GetDetailsAsync("inv1", "acc1")).ReturnsAsync(booking);
             var service = CreateService();
+            // Act
             var result = await service.GetTicketDetailsAsync("inv1", "acc1");
-            var seatDetailsProp = result.GetType().GetProperty("SeatDetails");
-            var seatDetails = seatDetailsProp.GetValue(result) as IEnumerable<MovieTheater.ViewModels.SeatDetailViewModel>;
-            Assert.NotNull(seatDetails);
-            Assert.Empty(seatDetails);
+            // Assert
+            Assert.NotNull(result);
+            Assert.Equal("inv1", result.InvoiceId);
         }
 
         /// <summary>
@@ -237,6 +280,7 @@ namespace MovieTheater.Tests.Service
         [Fact]
         public async Task CancelTicketAsync_Success_WithRankUpMessage()
         {
+            // Arrange
             SetupDashboardHubMock();
             var booking = new Invoice
             {
@@ -249,7 +293,9 @@ namespace MovieTheater.Tests.Service
             _scheduleSeatRepoMock.Setup(r => r.GetByInvoiceId("inv1")).Returns(new List<ScheduleSeat>());
             _accountServiceMock.Setup(a => a.GetAndClearRankUpgradeNotification("acc1")).Returns("Chúc mừng bạn đã lên hạng!");
             var service = CreateService();
+            // Act
             var (success, messages) = await service.CancelTicketAsync("inv1", "acc1");
+            // Assert
             Assert.True(success);
             Assert.Contains("Chúc mừng bạn đã lên hạng!", string.Join(" ", messages));
         }
@@ -260,6 +306,7 @@ namespace MovieTheater.Tests.Service
         [Fact]
         public async Task CancelTicketAsync_Success_NoVoucherNoScoreNoRefund()
         {
+            // Arrange
             SetupDashboardHubMock();
             var booking = new Invoice
             {
@@ -271,7 +318,9 @@ namespace MovieTheater.Tests.Service
             _invoiceRepoMock.Setup(r => r.GetForCancelAsync("inv1", "acc1")).ReturnsAsync(booking);
             _scheduleSeatRepoMock.Setup(r => r.GetByInvoiceId("inv1")).Returns(new List<ScheduleSeat>());
             var service = CreateService();
+            // Act
             var (success, messages) = await service.CancelTicketAsync("inv1", "acc1");
+            // Assert
             Assert.True(success);
             Assert.Contains("Ticket cancelled successfully.", messages);
             Assert.DoesNotContain("Refund voucher value", string.Join(" ", messages));
@@ -283,6 +332,7 @@ namespace MovieTheater.Tests.Service
         [Fact]
         public async Task CancelTicketByAdminAsync_Success()
         {
+            // Arrange
             SetupDashboardHubMock();
             var booking = new Invoice
             {
@@ -299,7 +349,9 @@ namespace MovieTheater.Tests.Service
             _scheduleSeatRepoMock.Setup(r => r.GetByInvoiceId("inv1")).Returns(new List<ScheduleSeat>());
             _voucherServiceMock.Setup(v => v.GetById("v1")).Returns(voucher);
             var service = CreateService();
+            // Act
             var (success, messages) = await service.CancelTicketByAdminAsync("inv1");
+            // Assert
             Assert.True(success);
             Assert.Contains("Ticket cancelled successfully.", messages);
             Assert.Contains("Refund voucher value", string.Join(" ", messages));
@@ -312,6 +364,7 @@ namespace MovieTheater.Tests.Service
         [Fact]
         public async Task GetHistoryPartialAsync_FilterByStatus()
         {
+            // Arrange
             var accountId = "acc1";
             var invoices = new List<Invoice> {
                 new Invoice { InvoiceId = "inv1", AccountId = accountId, BookingDate = new System.DateTime(2024,1,1), Status = InvoiceStatus.Completed },
@@ -319,7 +372,9 @@ namespace MovieTheater.Tests.Service
             };
             _invoiceRepoMock.Setup(r => r.GetByAccountIdAsync(accountId, null)).ReturnsAsync(invoices);
             var service = CreateService();
+            // Act
             var result = await service.GetHistoryPartialAsync(accountId, null, null, "booked");
+            // Assert
             Assert.Single(result);
         }
 
@@ -329,6 +384,7 @@ namespace MovieTheater.Tests.Service
         [Fact]
         public async Task GetHistoryPartialAsync_FilterByDate()
         {
+            // Arrange
             var accountId = "acc1";
             var invoices = new List<Invoice> {
                 new Invoice { InvoiceId = "inv1", AccountId = accountId, BookingDate = new System.DateTime(2024,1,1), Status = InvoiceStatus.Completed },
@@ -338,8 +394,47 @@ namespace MovieTheater.Tests.Service
             var service = CreateService();
             var fromDate = new System.DateTime(2024, 2, 1);
             var toDate = new System.DateTime(2024, 2, 1);
+            // Act
             var result = await service.GetHistoryPartialAsync(accountId, fromDate, toDate, "all");
+            // Assert
             Assert.Single(result);
+        }
+
+        [Fact]
+        public async Task GetTicketDetailsAsync_ReturnsInvoice_WhenFound()
+        {
+            // Arrange
+            var booking = new Invoice { InvoiceId = "inv1", AccountId = "acc1" };
+            _invoiceRepoMock.Setup(r => r.GetDetailsAsync("inv1", "acc1")).ReturnsAsync(booking);
+            var service = CreateService();
+            // Act
+            var result = await service.GetTicketDetailsAsync("inv1", "acc1");
+            // Assert
+            Assert.NotNull(result);
+            Assert.Equal("inv1", result.InvoiceId);
+        }
+
+        [Fact]
+        public void BuildSeatDetails_ReturnsSeatDetails_FromScheduleSeats()
+        {
+            // Arrange
+            var booking = new Invoice
+            {
+                ScheduleSeats = new List<ScheduleSeat>
+                {
+                    new ScheduleSeat { Seat = new Seat { SeatId = 1, SeatName = "A1", SeatType = new SeatType { TypeName = "VIP", PricePercent = 100 } } },
+                    new ScheduleSeat { Seat = new Seat { SeatId = 2, SeatName = "A2", SeatType = new SeatType { TypeName = "Normal", PricePercent = 80 } } }
+                },
+                PromotionDiscount = 10,
+                MovieShow = new MovieShow { Version = new MovieTheater.Models.Version { Multi = 1 } }
+            };
+            var service = CreateService();
+            // Act
+            var seatDetails = service.BuildSeatDetails(booking);
+            // Assert
+            Assert.Equal(2, seatDetails.Count);
+            Assert.Contains(seatDetails, s => s.SeatName == "A1");
+            Assert.Contains(seatDetails, s => s.SeatName == "A2");
         }
     }
 }
