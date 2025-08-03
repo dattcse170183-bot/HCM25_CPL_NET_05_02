@@ -7,11 +7,11 @@
 
     var totalBookings = Model.Count();
 
-    var paid = Model.Count(b => b.Status == MovieTheater.Models.InvoiceStatus.Completed && !b.Cancel);
+    var completed = Model.Count(b => b.Status == MovieTheater.Models.InvoiceStatus.Completed && !b.Cancel);
 
-    var cancelled = Model.Count(b => (b.Status == MovieTheater.Models.InvoiceStatus.Completed && b.Cancel) || b.Status == null);
+    var cancelled = Model.Count(b => b.Status == MovieTheater.Models.InvoiceStatus.Completed && b.Cancel);
 
-    var unpaid = Model.Count(b => b.Status == MovieTheater.Models.InvoiceStatus.Incomplete);
+    var notPaid = Model.Count(b => b.Status != MovieTheater.Models.InvoiceStatus.Completed);
 }
 
 <div class="container-fluid">
@@ -41,13 +41,13 @@
                             {
                                 <option value="">All Status</option>
                             }
-                            @if (ViewBag.StatusFilter?.ToString() == "paid")
+                            @if (ViewBag.StatusFilter?.ToString() == "completed")
                             {
-                                <option value="paid" selected>Paid</option>
+                                <option value="completed" selected>Completed</option>
                             }
                             else
                             {
-                                <option value="paid">Paid</option>
+                                <option value="completed">Completed</option>
                             }
                             @if (ViewBag.StatusFilter?.ToString() == "cancelled")
                             {
@@ -57,13 +57,13 @@
                             {
                                 <option value="cancelled">Cancelled</option>
                             }
-                            @if (ViewBag.StatusFilter?.ToString() == "unpaid")
+                            @if (ViewBag.StatusFilter?.ToString() == "notpaid")
                             {
-                                <option value="unpaid" selected>Unpaid</option>
+                                <option value="notpaid" selected>Not Paid</option>
                             }
                             else
                             {
-                                <option value="unpaid">Unpaid</option>
+                                <option value="notpaid">Not Paid</option>
                             }
                         </select>
                     </div>
@@ -120,8 +120,8 @@
                 <div class="card-body">
                     <div class="d-flex justify-content-between">
                         <div>
-                            <h4 class="mb-0" id="paidCount">@paid</h4>
-                            <p class="mb-0">Paid</p>
+                            <h4 class="mb-0" id="completedCount">@completed</h4>
+                            <p class="mb-0">Completed</p>
                         </div>
                         <div class="align-self-center">
                             <i class="bi bi-check-circle fa-2x"></i>
@@ -150,8 +150,8 @@
                 <div class="card-body">
                     <div class="d-flex justify-content-between">
                         <div>
-                            <h4 class="mb-0" id="unpaidCount">@unpaid</h4>
-                            <p class="mb-0">Unpaid</p>
+                            <h4 class="mb-0" id="notPaidCount">@notPaid</h4>
+                            <p class="mb-0">Not Paid</p>
                         </div>
                         <div class="align-self-center">
                             <i class="bi bi-hourglass-split fa-2x"></i>
