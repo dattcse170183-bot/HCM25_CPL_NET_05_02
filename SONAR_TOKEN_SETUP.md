@@ -68,4 +68,4 @@ Sau khi setup SONAR_TOKEN:
 Nếu vẫn gặp vấn đề:
 1. Kiểm tra **GitHub Actions logs** để xem lỗi chi tiết
 2. Kiểm tra **SonarCloud project** có tồn tại không
-3. Kiểm tra **Project key** trong `sonar-project.properties` 
+3. Kiểm tra **Project key** trong workflow configuration 

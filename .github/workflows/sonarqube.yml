@@ -59,4 +59,4 @@ jobs:
           Write-Host "Building project..."
           dotnet build
           Write-Host "Ending SonarQube analysis..."
-          dotnet sonarscanner end /d:sonar.token="$env:SONAR_TOKEN" 
+          dotnet sonarscanner end /d:sonar.token="$env:SONAR_TOKEN"
