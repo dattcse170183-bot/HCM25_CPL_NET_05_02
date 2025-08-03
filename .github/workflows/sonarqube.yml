@@ -39,7 +39,10 @@ jobs:
         shell: powershell
         run: |
           Write-Host "Checking for coverage files..."
-          Get-ChildItem -Path TestResults -Recurse -Filter "*.xml" | ForEach-Object { Write-Host "Found: $($_.FullName)" }
+          Get-ChildItem -Path TestResults -Recurse -Filter "*.xml" | ForEach-Object { 
+            Write-Host "Found: $($_.FullName)"
+            Write-Host "Size: $($_.Length) bytes"
+          }
           
       - name: Install SonarQube Scanner
         shell: powershell
@@ -52,7 +55,7 @@ jobs:
         shell: powershell
         run: |
           Write-Host "Starting SonarQube analysis..."
-          dotnet sonarscanner begin /k:"DreamFog20_HCM25_CPL_NET_05" /o:"dreamfog20" /d:sonar.token="$env:SONAR_TOKEN" /d:sonar.host.url="https://sonarcloud.io" /d:sonar.cs.opencover.reportsPaths="TestResults/**/coverage.opencover.xml" /d:sonar.cs.cobertura.reportPaths="TestResults/**/coverage.cobertura.xml"
+          dotnet sonarscanner begin /k:"DreamFog20_HCM25_CPL_NET_05" /o:"dreamfog20" /d:sonar.token="$env:SONAR_TOKEN" /d:sonar.host.url="https://sonarcloud.io" /d:sonar.cs.opencover.reportsPaths="TestResults/**/coverage.opencover.xml" /d:sonar.cs.cobertura.reportPaths="TestResults/**/coverage.cobertura.xml" /d:sonar.projectBaseDir="." /d:sonar.sources="." /d:sonar.exclusions="**/MovieTheater.Tests/**,**/bin/**,**/obj/**,**/*.cshtml,**/*.js,**/*.css"
           Write-Host "Building project..."
           dotnet build
           Write-Host "Ending SonarQube analysis..."

@@ -60,4 +60,12 @@
     <None Include="wwwroot\js\hero-section.js" />
   </ItemGroup>
 
+  <!-- Coverage settings for main project -->
+  <PropertyGroup>
+    <CollectCoverage>true</CollectCoverage>
+    <CoverageOutputFormat>opencover,cobertura</CoverageOutputFormat>
+    <CoverageExcludeByAttribute>Obsolete,GeneratedCodeAttribute,CompilerGeneratedAttribute</CoverageExcludeByAttribute>
+    <CoverageExcludeByFile>**/bin/**/*,**/obj/**/*,**/TestResults/**/*,**/*.cshtml,**/*.js,**/*.css</CoverageExcludeByFile>
+  </PropertyGroup>
+
 </Project>
