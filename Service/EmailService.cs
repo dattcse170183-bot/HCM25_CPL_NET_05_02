@@ -24,7 +24,12 @@ namespace MovieTheater.Service
         public void Dispose() => _client.Dispose();
     }
 
-    public class EmailService
+    public interface IEmailService
+    {
+        bool SendEmail(string toEmail, string subject, string body, bool isHtml = true);
+    }
+
+    public class EmailService : IEmailService
     {
         private readonly IConfiguration _configuration;
         private readonly ILogger<EmailService> _logger;
@@ -60,12 +65,12 @@ namespace MovieTheater.Service
                 mailMessage.To.Add(toEmail);
 
                 smtpClient.Send(mailMessage);
-                _logger.LogInformation($"Email successfully sent to {toEmail}. Please check your inbox, including the Spam or Junk folder.");
+                _logger.LogInformation("Email successfully sent. Please check your inbox, including the Spam or Junk folder.");
                 return true;
             }
             catch (Exception ex)
             {
-                _logger.LogError($"Failed to send email to {toEmail}. Error: {ex.Message}");
+                _logger.LogError(ex, "Failed to send email");
                 return false;
             }
         }

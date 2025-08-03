@@ -2,9 +2,11 @@
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Identity;
 using MovieTheater.Service;
 using MovieTheater.ViewModels;
 using System.Security.Claims;
+using MovieTheater.Models;
 
 namespace MovieTheater.Controllers
 {
@@ -142,6 +144,31 @@ namespace MovieTheater.Controllers
                 Image = user.Image
             };
 
+            // If we have cropped image data, save it as a file
+            if (!string.IsNullOrEmpty(model.Profile.CroppedImageData))
+            {
+                try
+                {
+                    var base64Data = model.Profile.CroppedImageData.Replace("data:image/jpeg;base64,", "")
+                                                                   .Replace("data:image/png;base64,", "")
+                                                                   .Replace("data:image/gif;base64,", "");
+                    var imageBytes = Convert.FromBase64String(base64Data);
+                    
+                    var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/images/avatars");
+                    var uniqueFileName = Guid.NewGuid().ToString() + "_avatar.jpg";
+                    var filePath = Path.Combine(uploadsFolder, uniqueFileName);
+                    
+                    System.IO.File.WriteAllBytes(filePath, imageBytes);
+                    registerModel.Image = $"/images/avatars/{uniqueFileName}";
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Error saving cropped image");
+                    TempData["ErrorMessage"] = "Error processing image. Please try again.";
+                    return RedirectToAction("MainPage", new { tab = "Profile" });
+                }
+            }
+
             var success = _service.Update(user.AccountId, registerModel);
             if (success)
             {
@@ -175,6 +202,15 @@ namespace MovieTheater.Controllers
                 return RedirectToAction("Login", "Account");
             }
 
+            // Remove validation for fields that might be empty during update
+            ModelState.Remove("Profile.FullName");
+            ModelState.Remove("Profile.DateOfBirth");
+            ModelState.Remove("Profile.Gender");
+            ModelState.Remove("Profile.IdentityCard");
+            ModelState.Remove("Profile.Email");
+            ModelState.Remove("Profile.Address");
+            ModelState.Remove("Profile.PhoneNumber");
+            
             if (!ModelState.IsValid)
             {
                 var errors = string.Join(", ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
@@ -195,7 +231,7 @@ namespace MovieTheater.Controllers
                 Address = model.Profile.Address,
                 PhoneNumber = model.Profile.PhoneNumber,
                 Image = user.Image, // Preserve the existing image
-                ImageFile = null    // Ensure we do not process a file
+                ImageFile = model.Profile.ImageFile // Allow image upload
             };
 
             var success = _service.Update(user.AccountId, registerModel);
@@ -244,7 +280,7 @@ namespace MovieTheater.Controllers
                 return Json(new OtpResponse { Success = false, Error = "Current password is incorrect." });
             }
 
-            _logger.LogInformation($"[SendOtp] accountId={user.AccountId}");
+            _logger.LogInformation("OTP send request initiated for user: {UserId}", user.AccountId);
 
             var otp = new Random().Next(100000, 999999).ToString();
             var expiry = DateTime.UtcNow.AddMinutes(10);
@@ -271,7 +307,7 @@ namespace MovieTheater.Controllers
             if (user == null)
                 return Json(new { success = false, error = "User not found." });
 
-            _logger.LogInformation($"[VerifyOtp] accountId={user.AccountId}");
+            _logger.LogInformation("OTP verification request initiated for user: {UserId}", user.AccountId);
 
             var receivedOtp = model?.Otp?.Trim();
             var otpValid = _service.VerifyOtp(user.AccountId, receivedOtp);
@@ -301,8 +337,17 @@ namespace MovieTheater.Controllers
             if (newPassword != confirmPassword)
                 return Json(new { success = false, error = "Passwords do not match." });
 
-            if (currentPassword == newPassword)
-                return Json(new { success = false, error = "New password must be different from current password." });
+            // Check if new password is different from current password (more secure check)
+            var account = _service.GetById(user.AccountId);
+            if (account != null)
+            {
+                var hasher = new PasswordHasher<Account>();
+                var passwordVerificationResult = hasher.VerifyHashedPassword(null, account.Password, newPassword);
+                if (passwordVerificationResult == PasswordVerificationResult.Success)
+                {
+                    return Json(new { success = false, error = "New password must be different from current password." });
+                }
+            }
 
             // Check OTP
             if (!_service.VerifyOtp(user.AccountId, otp))

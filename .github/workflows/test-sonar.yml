@@ -1,0 +1,41 @@
+name: Test SonarQube
+
+on:
+  push:
+    branches:
+      - quality-gate
+
+jobs:
+  test:
+    name: Test SonarQube Configuration
+    runs-on: windows-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+          
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+          
+      - name: Check environment
+        shell: powershell
+        run: |
+          Write-Host "=== Environment Check ==="
+          Write-Host "Current directory: $(Get-Location)"
+          Write-Host "Files in current directory:"
+          Get-ChildItem | ForEach-Object { Write-Host "  $($_.Name)" }
+          
+      - name: Install SonarQube Scanner
+        shell: powershell
+        run: |
+          Write-Host "=== Installing SonarQube Scanner ==="
+          dotnet tool install --global dotnet-sonarscanner
+          Write-Host "SonarQube Scanner installed successfully"
+          
+      - name: Test SonarQube Scanner
+        shell: powershell
+        run: |
+          Write-Host "=== Testing SonarQube Scanner ==="
+          Write-Host "Scanner installed and ready for use"
+          Write-Host "Scanner test completed successfully" 

@@ -1,0 +1,49 @@
+name: Test SONAR_TOKEN
+
+on:
+  push:
+    branches:
+      - quality-gate
+
+jobs:
+  test-token:
+    name: Test SONAR_TOKEN Configuration
+    runs-on: windows-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+          
+      - name: Test SONAR_TOKEN
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        shell: powershell
+        run: |
+          Write-Host "=== Testing SONAR_TOKEN ==="
+          Write-Host "Token exists: $($env:SONAR_TOKEN -ne '')"
+          Write-Host "Token length: $($env:SONAR_TOKEN.Length)"
+          
+          if ($env:SONAR_TOKEN -eq '') {
+            Write-Host "ERROR: SONAR_TOKEN is empty!"
+            exit 1
+          } else {
+            Write-Host "SUCCESS: SONAR_TOKEN is configured"
+          }
+          
+      - name: Test SonarCloud Connection
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        shell: powershell
+        run: |
+          Write-Host "=== Testing SonarCloud Connection ==="
+          
+          # Test with curl (if available)
+          try {
+            $response = Invoke-RestMethod -Uri "https://sonarcloud.io/api/authentication/validate" -Headers @{
+              "Authorization" = "Bearer $env:SONAR_TOKEN"
+            } -Method GET
+            Write-Host "SUCCESS: Token is valid"
+            Write-Host "Response: $response"
+          } catch {
+            Write-Host "ERROR: Token validation failed"
+            Write-Host "Error: $($_.Exception.Message)"
+          } 

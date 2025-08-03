@@ -119,13 +119,13 @@ public class TicketService : ITicketService
         }
         else if (!string.IsNullOrEmpty(booking.Seat))
         {
-            var seatIdArr = booking.SeatIds
+            var seatNames = booking.Seat
                .Split(',', StringSplitOptions.RemoveEmptyEntries)
-               .Select(id => int.Parse(id.Trim()))
+               .Select(name => name.Trim())
                .ToList();
-            foreach (var seatId in seatIdArr)
+            foreach (var seatName in seatNames)
             {
-                var seat = _seatRepository.GetById(seatId);
+                var seat = _seatRepository.GetSeatByName(seatName);
                 if (seat == null) continue;
                 var seatType = seat.SeatType;
                 decimal originalPrice = (seatType?.PricePercent ?? 0) * versionMulti;
@@ -313,7 +313,7 @@ public class TicketService : ITicketService
         return result;
     }
 
-    public async Task<(bool Success, List<string> Messages)> CancelTicketByAdminAsync(string ticketId)
+    public async Task<(bool Success, List<string> Messages)> CancelTicketByAdminAsync(string ticketId, string cancelledByRole = "Admin")
     {
         var booking = _invoiceRepository.GetById(ticketId);
         if (booking == null)
@@ -324,7 +324,7 @@ public class TicketService : ITicketService
         // Đánh dấu đã hủy, không đổi status
         booking.Cancel = true;
         booking.CancelDate = DateTime.Now;
-        booking.CancelBy = "Admin";
+        booking.CancelBy = cancelledByRole;
 
         // Update schedule seats: mark as available again
         var scheduleSeatsToUpdate = _scheduleSeatRepository.GetByInvoiceId(booking.InvoiceId).ToList();
