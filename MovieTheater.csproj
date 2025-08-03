@@ -51,9 +51,7 @@
     </Content>
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="MovieTheater.Tests\" />
-  </ItemGroup>
+
 
   <ItemGroup>
     <None Include="wwwroot\css\hero-section.css" />
