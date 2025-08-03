@@ -1,0 +1,46 @@
+name: Simple Test
+
+on:
+  push:
+    branches:
+      - quality-gate
+  pull_request:
+    branches:
+      - quality-gate
+
+jobs:
+  test:
+    name: Simple Test
+    runs-on: windows-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+          
+      - name: Restore dependencies
+        run: dotnet restore
+        
+      - name: Build
+        run: dotnet build --no-restore
+        
+      - name: Run tests
+        run: dotnet test MovieTheater.Tests --logger "console;verbosity=minimal"
+        
+      - name: Run tests with coverage
+        run: dotnet test MovieTheater.Tests --collect:"XPlat Code Coverage" --results-directory "TestResults" --configuration Release --logger "console;verbosity=minimal"
+        
+      - name: List test results
+        shell: powershell
+        run: |
+          Write-Host "Checking TestResults directory..."
+          if (Test-Path "TestResults") {
+            Get-ChildItem -Path TestResults -Recurse | ForEach-Object {
+              Write-Host "Found: $($_.FullName)"
+            }
+          } else {
+            Write-Host "TestResults directory not found"
+          } 
