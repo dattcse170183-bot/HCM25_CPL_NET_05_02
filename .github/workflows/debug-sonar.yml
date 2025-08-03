@@ -57,6 +57,10 @@ jobs:
           Write-Host "Testing begin command..."
           dotnet sonarscanner begin /k:"DreamFog20_HCM25_CPL_NET_05" /o:"dreamfog20" /d:sonar.token="${{ secrets.SONAR_TOKEN }}" /d:sonar.host.url="https://sonarcloud.io"
           
+          # Build project
+          Write-Host "Building project..."
+          dotnet build
+          
           # Test end command
           Write-Host "Testing end command..."
           dotnet sonarscanner end /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
