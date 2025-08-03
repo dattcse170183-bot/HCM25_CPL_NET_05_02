@@ -52,8 +52,13 @@ jobs:
         shell: powershell
         run: |
           Write-Host "Starting SonarQube analysis..."
-          dotnet sonarscanner begin /k:"DreamFog20_HCM25_CPL_NET_05" /o:"dreamfog20" /d:sonar.token="$env:SONAR_TOKEN" /d:sonar.host.url="https://sonarcloud.io" /d:sonar.cs.opencover.reportsPaths="TestResults/**/coverage.opencover.xml" /d:sonar.cs.cobertura.reportPaths="TestResults/**/coverage.cobertura.xml" /d:sonar.projectBaseDir="." /d:sonar.sources="." /d:sonar.exclusions="**/MovieTheater.Tests/**,**/bin/**,**/obj/**,**/*.cshtml,**/*.js,**/*.css,**/TestResults/**" /d:sonar.test.inclusions="**/MovieTheater.Tests/**/*.cs" /d:sonar.language="cs" /d:sonar.sourceEncoding="UTF-8"
-          Write-Host "Building project with SonarQube..."
-          dotnet build --configuration Release
-          Write-Host "Ending SonarQube analysis..."
-          dotnet sonarscanner end /d:sonar.token="$env:SONAR_TOKEN"
+          try {
+            dotnet sonarscanner begin /k:"DreamFog20_HCM25_CPL_NET_05" /o:"dreamfog20" /d:sonar.token="$env:SONAR_TOKEN" /d:sonar.host.url="https://sonarcloud.io" /d:sonar.cs.opencover.reportsPaths="TestResults/**/coverage.opencover.xml" /d:sonar.cs.cobertura.reportPaths="TestResults/**/coverage.cobertura.xml"
+            Write-Host "Building project with SonarQube..."
+            dotnet build --configuration Release
+            Write-Host "Ending SonarQube analysis..."
+            dotnet sonarscanner end /d:sonar.token="$env:SONAR_TOKEN"
+          } catch {
+            Write-Host "Error during SonarQube analysis: $($_.Exception.Message)"
+            exit 1
+          }
