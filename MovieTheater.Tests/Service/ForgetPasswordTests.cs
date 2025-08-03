@@ -1,14 +1,10 @@
 using Microsoft.Extensions.Logging;
+using Microsoft.AspNetCore.Http;
 using Moq;
 using MovieTheater.Models;
 using MovieTheater.Repository;
 using MovieTheater.Service;
-using MovieTheater.ViewModels;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using Xunit;
-using Microsoft.AspNetCore.Http;
+using System.Security.Claims;
 
 namespace MovieTheater.Tests.Service
 {
@@ -18,7 +14,7 @@ namespace MovieTheater.Tests.Service
         private readonly Mock<IEmployeeRepository> _employeeRepositoryMock;
         private readonly Mock<IMemberRepository> _memberRepositoryMock;
         private readonly Mock<IHttpContextAccessor> _httpContextAccessorMock;
-        private readonly Mock<EmailService> _emailServiceMock;
+        private readonly Mock<IEmailService> _emailServiceMock;
         private readonly Mock<ILogger<AccountService>> _loggerMock;
         private readonly Mock<MovieTheaterContext> _contextMock;
         private readonly AccountService _accountService;
@@ -29,7 +25,7 @@ namespace MovieTheater.Tests.Service
             _employeeRepositoryMock = new Mock<IEmployeeRepository>();
             _memberRepositoryMock = new Mock<IMemberRepository>();
             _httpContextAccessorMock = new Mock<IHttpContextAccessor>();
-            _emailServiceMock = new Mock<EmailService>();
+            _emailServiceMock = new Mock<IEmailService>();
             _loggerMock = new Mock<ILogger<AccountService>>();
             _contextMock = new Mock<MovieTheaterContext>();
 

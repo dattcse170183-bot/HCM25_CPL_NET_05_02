@@ -24,7 +24,12 @@ namespace MovieTheater.Service
         public void Dispose() => _client.Dispose();
     }
 
-    public class EmailService
+    public interface IEmailService
+    {
+        bool SendEmail(string toEmail, string subject, string body, bool isHtml = true);
+    }
+
+    public class EmailService : IEmailService
     {
         private readonly IConfiguration _configuration;
         private readonly ILogger<EmailService> _logger;
