@@ -7,6 +7,16 @@
 
     <IsPackable>false</IsPackable>
     <IsTestProject>true</IsTestProject>
+    
+    <!-- Coverage settings -->
+    <CollectCoverage>true</CollectCoverage>
+    <CoverageCollectorDirectory>$(MSBuildThisFileDirectory)TestResults</CoverageCollectorDirectory>
+    <CoverageOutputFormat>opencover,cobertura</CoverageOutputFormat>
+    <CoverageOutputDirectory>$(MSBuildThisFileDirectory)TestResults</CoverageOutputDirectory>
+    <CoverageExcludeByAttribute>Obsolete,GeneratedCodeAttribute,CompilerGeneratedAttribute</CoverageExcludeByAttribute>
+    <CoverageExcludeByFile>**/bin/**/*,**/obj/**/*,**/TestResults/**/*,**/*.cshtml,**/*.js,**/*.css</CoverageExcludeByFile>
+    <CoverageMergeWith>$(MSBuildThisFileDirectory)TestResults\coverage.opencover.xml</CoverageMergeWith>
+    <CoverageReportFormat>opencover,cobertura</CoverageReportFormat>
   </PropertyGroup>
 
   <ItemGroup>

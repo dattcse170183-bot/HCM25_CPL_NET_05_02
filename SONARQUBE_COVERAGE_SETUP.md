@@ -1,132 +1,187 @@
 # Hướng dẫn tích hợp Unit Test Coverage vào SonarQube
 
 ## Tổng quan
-Dự án này đã được cấu hình để tích hợp unit test coverage vào SonarQube. Coverage sẽ được tạo ra bằng Coverlet và được gửi đến SonarQube để phân tích.
+Tài liệu này hướng dẫn cách tích hợp unit test coverage vào SonarQube cho dự án Movie Theater Team03.
 
-## Các file cấu hình đã tạo
+## Yêu cầu hệ thống
 
-### 1. `sonar-project.properties`
-File cấu hình chính cho SonarQube analysis:
-- Định nghĩa project key và tên
-- Cấu hình đường dẫn source code và test
-- Thiết lập coverage exclusions
-- Cấu hình quality gate
+### 1. Cài đặt SonarQube Scanner
+```bash
+# Tải và cài đặt SonarQube Scanner từ:
+# https://docs.sonarqube.org/latest/analysis/scan/sonarscanner/
+```
 
-### 2. `sonar-analysis.bat`
-Script để chạy SonarQube analysis locally:
-- Kiểm tra SonarQube Scanner
-- Chạy tests với coverage
-- Thực hiện SonarQube analysis
+### 2. Cài đặt ReportGenerator
+```bash
+dotnet tool install --global dotnet-reportgenerator-globaltool
+```
 
-### 3. `.gitlab-ci.yml` (đã cập nhật)
-Pipeline CI/CD với các stage:
-- `build`: Build project
-- `test`: Chạy tests với coverage
-- `sonarqube`: Phân tích SonarQube
-- `deploy`: Deploy ứng dụng
+### 3. Cài đặt Coverlet Collector
+Đã được cấu hình trong `MovieTheater.Tests.csproj`:
+```xml
+<PackageReference Include="coverlet.collector" Version="6.0.4" />
+```
+
+## Cấu hình
+
+### 1. SonarQube Configuration (`sonar-project.properties`)
+- Hỗ trợ nhiều format coverage: OpenCover, Cobertura
+- Cấu hình exclusions cho coverage
+- Thiết lập ngưỡng coverage tối thiểu (70%)
+
+### 2. Test Project Configuration (`MovieTheater.Tests.csproj`)
+- Cấu hình Coverlet collector
+- Thiết lập output formats: OpenCover, Cobertura
+- Cấu hình exclusions cho coverage
 
 ## Cách sử dụng
 
-### Chạy locally
+### Phương pháp 1: Sử dụng Batch Script (Windows)
+```bash
+# Chạy script tích hợp
+sonar-analysis-with-coverage.bat
+```
 
-1. **Cài đặt SonarQube Scanner:**
-   ```bash
-   # Windows
-   # Tải từ: https://docs.sonarqube.org/latest/analysis/scan/sonarscanner/
-   
-   # Hoặc sử dụng dotnet tool
-   dotnet tool install --global dotnet-sonarscanner
-   ```
+### Phương pháp 2: Sử dụng PowerShell Script (Windows)
+```powershell
+# Chạy PowerShell script
+.\sonar-analysis-with-coverage.ps1
+```
 
-2. **Chạy analysis:**
-   ```bash
-   # Sử dụng script batch
-   sonar-analysis.bat
-   
-   # Hoặc chạy thủ công
-   dotnet test --collect:"XPlat Code Coverage" --results-directory "TestResults"
-   sonar-scanner
-   ```
+### Phương pháp 3: Chạy thủ công
+```bash
+# Bước 1: Clean và build
+dotnet clean
+dotnet restore
+dotnet build --configuration Release
 
-### Chạy trên GitLab CI/CD
+# Bước 2: Chạy tests với coverage
+dotnet test --no-build --collect:"XPlat Code Coverage" --results-directory "TestResults" --configuration Release
 
-1. **Thiết lập biến môi trường trong GitLab:**
-   - `SONAR_HOST_URL`: URL của SonarQube server
-   - `SONAR_TOKEN`: Token để authenticate với SonarQube
+# Bước 3: Tạo HTML report (tùy chọn)
+reportgenerator -reports:"TestResults/**/coverage.opencover.xml" -targetdir:"coverage-report" -reporttypes:Html;TextSummary
 
-2. **Pipeline sẽ tự động:**
-   - Chạy tests với coverage
-   - Gửi kết quả đến SonarQube
-   - Hiển thị coverage trong SonarQube dashboard
+# Bước 4: Chạy SonarQube analysis
+sonar-scanner
+```
 
-## Cấu hình Coverage
+## Cấu trúc file coverage
 
-### Coverage Format
-- **OpenCover**: Được sử dụng chính thức với SonarQube
-- **Cobertura**: Format thay thế (có thể chuyển đổi)
+### OpenCover Format
+```
+TestResults/
+└── [timestamp]/
+    └── coverage.opencover.xml
+```
 
-### Exclusions
-Các file sau sẽ không được tính vào coverage:
-- Views (.cshtml)
-- Static files (CSS, JS, images)
-- Configuration files
-- Documentation files
+### Cobertura Format
+```
+TestResults/
+└── [timestamp]/
+    └── coverage.cobertura.xml
+```
 
-### Coverage Paths
-- Source code: `Controllers`, `Models`, `Service`, `Repository`, `Helpers`, `Middleware`, `Hubs`
-- Tests: `MovieTheater.Tests`
+## Kiểm tra kết quả
+
+### 1. HTML Coverage Report
+- File: `coverage-report/index.html`
+- Hiển thị chi tiết coverage theo từng file
+- Tương tác với source code
+
+### 2. SonarQube Dashboard
+- Truy cập SonarQube server
+- Xem metrics coverage trong project
+- Kiểm tra Quality Gate
 
 ## Troubleshooting
 
-### Lỗi thường gặp
+### Vấn đề thường gặp
 
-1. **SonarQube Scanner không tìm thấy:**
-   ```bash
-   # Kiểm tra PATH
-   where sonar-scanner
-   
-   # Hoặc sử dụng dotnet tool
-   dotnet tool list --global
-   ```
+#### 1. Không tìm thấy file coverage
+**Nguyên nhân:** Test không chạy hoặc cấu hình sai
+**Giải pháp:**
+- Kiểm tra test project có build thành công không
+- Kiểm tra cấu hình Coverlet trong `.csproj`
+- Chạy test riêng lẻ để debug
 
-2. **Coverage files không được tạo:**
-   ```bash
-   # Kiểm tra coverlet.collector đã được cài đặt
-   dotnet list MovieTheater.Tests package
-   ```
+#### 2. SonarQube không nhận coverage
+**Nguyên nhân:** Đường dẫn coverage file sai
+**Giải pháp:**
+- Kiểm tra `sonar.cs.opencover.reportsPaths` trong `sonar-project.properties`
+- Đảm bảo file coverage tồn tại trước khi chạy sonar-scanner
 
-3. **SonarQube analysis thất bại:**
-   - Kiểm tra `SONAR_HOST_URL` và `SONAR_TOKEN`
-   - Kiểm tra kết nối mạng đến SonarQube server
+#### 3. Coverage thấp
+**Nguyên nhân:** Test chưa đầy đủ
+**Giải pháp:**
+- Viết thêm unit tests
+- Kiểm tra exclusions trong cấu hình
+- Review test strategy
 
-### Kiểm tra coverage locally
+### Debug Commands
 
 ```bash
-# Chạy tests với coverage
-dotnet test --collect:"XPlat Code Coverage" --results-directory "TestResults"
+# Kiểm tra cấu trúc TestResults
+dir /s TestResults
 
-# Tạo HTML report (cần ReportGenerator)
-reportgenerator -reports:"TestResults/**/coverage.opencover.xml" -targetdir:"coverage-report" -reporttypes:Html
+# Kiểm tra file coverage
+find TestResults -name "*.xml"
+
+# Chạy test với verbose output
+dotnet test --logger "console;verbosity=detailed"
+
+# Kiểm tra SonarQube Scanner
+sonar-scanner --version
 ```
 
-## Quality Gate
+## Cấu hình nâng cao
 
-SonarQube sẽ kiểm tra:
-- Code coverage percentage
-- Code smells
-- Security hotspots
-- Bugs
-- Technical debt
+### 1. Custom Coverage Exclusions
+Thêm vào `sonar-project.properties`:
+```properties
+sonar.coverage.exclusions=**/Program.cs,**/Startup.cs,**/*.cshtml
+```
 
-## Lưu ý
+### 2. Coverage Thresholds
+```properties
+sonar.coverage.minimum=80
+```
 
-1. **Performance**: Coverage analysis có thể làm chậm build process
-2. **Storage**: Coverage files có thể lớn, nên cleanup định kỳ
-3. **Security**: Không commit `SONAR_TOKEN` vào repository
-4. **Maintenance**: Cập nhật SonarQube Scanner định kỳ
+### 3. Quality Gate Rules
+Cấu hình trong SonarQube Dashboard:
+- Coverage trên new code > 80%
+- Coverage trên overall > 70%
+- No uncovered conditions
 
-## Liên kết hữu ích
+## CI/CD Integration
 
-- [SonarQube Documentation](https://docs.sonarqube.org/)
-- [Coverlet Documentation](https://github.com/coverlet-coverage/coverlet)
-- [.NET SonarQube Scanner](https://docs.sonarqube.org/latest/analysis/scan/sonarscanner-for-msbuild/) 
+### GitHub Actions Example
+```yaml
+name: SonarQube Analysis
+on: [push, pull_request]
+jobs:
+  sonarqube:
+    runs-on: windows-latest
+    steps:
+    - uses: actions/checkout@v3
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v3
+      with:
+        dotnet-version: '8.0.x'
+    - name: Install SonarQube Scanner
+      run: |
+        # Download and setup sonar-scanner
+    - name: Run Tests with Coverage
+      run: dotnet test --collect:"XPlat Code Coverage"
+    - name: SonarQube Analysis
+      run: sonar-scanner
+```
+
+## Kết luận
+
+Với cấu hình này, bạn có thể:
+1. Chạy unit tests với coverage
+2. Tạo HTML report để review
+3. Tích hợp coverage vào SonarQube
+4. Theo dõi quality metrics trong dashboard
+
+Đảm bảo chạy script `sonar-analysis-with-coverage.bat` hoặc `sonar-analysis-with-coverage.ps1` để có kết quả tốt nhất. 
