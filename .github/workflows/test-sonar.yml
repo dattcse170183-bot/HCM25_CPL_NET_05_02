@@ -18,23 +18,25 @@ jobs:
         with:
           dotnet-version: '8.0.x'
           
-      - name: Check SonarQube config
+      - name: Check environment
         shell: powershell
         run: |
-          Write-Host "Checking sonar-project.properties..."
-          if (Test-Path "sonar-project.properties") {
-            Get-Content "sonar-project.properties"
-          } else {
-            Write-Host "sonar-project.properties not found!"
-          }
+          Write-Host "=== Environment Check ==="
+          Write-Host "Current directory: $(Get-Location)"
+          Write-Host "Files in current directory:"
+          Get-ChildItem | ForEach-Object { Write-Host "  $($_.Name)" }
           
       - name: Install SonarQube Scanner
         shell: powershell
         run: |
+          Write-Host "=== Installing SonarQube Scanner ==="
           dotnet tool install --global dotnet-sonarscanner
+          Write-Host "SonarQube Scanner installed successfully"
           
       - name: Test SonarQube Scanner
         shell: powershell
         run: |
-          Write-Host "Testing SonarQube scanner..."
-          dotnet sonarscanner --version 
+          Write-Host "=== Testing SonarQube Scanner ==="
+          Write-Host "Scanner version:"
+          dotnet sonarscanner --version
+          Write-Host "Scanner test completed successfully" 
