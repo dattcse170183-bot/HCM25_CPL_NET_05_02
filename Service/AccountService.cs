@@ -18,13 +18,13 @@ namespace MovieTheater.Service
         private readonly IEmployeeRepository _employeeRepository;
         private readonly IMemberRepository _memberRepository;
         private readonly IHttpContextAccessor _httpContextAccessor;
-        private readonly EmailService _emailService;
+        private readonly IEmailService _emailService;
         private readonly ILogger<AccountService> _logger;
         private static readonly ConcurrentDictionary<string, (string Otp, DateTime Expiry)> _otpStore = new();
         private static readonly ConcurrentDictionary<string, string> _pendingRankNotifications = new();
         private readonly MovieTheaterContext _context;
 
-        public AccountService(IAccountRepository repository, IEmployeeRepository employeeRepository, IMemberRepository memberRepository, IHttpContextAccessor httpContextAccessor, EmailService emailService, ILogger<AccountService> logger, MovieTheaterContext context)
+        public AccountService(IAccountRepository repository, IEmployeeRepository employeeRepository, IMemberRepository memberRepository, IHttpContextAccessor httpContextAccessor, IEmailService emailService, ILogger<AccountService> logger, MovieTheaterContext context)
         {
             _repository = repository;
             _employeeRepository = employeeRepository;

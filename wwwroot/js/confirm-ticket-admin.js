@@ -176,7 +176,7 @@
             $('#confirmTicketAdminBtn').prop('disabled', false);
             $('#createQRCodeBtn').prop('disabled', false);
 
-    
+            // Debug info
             console.log('Guest validation:', {
                 guestName: $('#guestName').val(),
                 guestPhone: $('#guestPhone').val(),
@@ -415,6 +415,7 @@
         // Áp dụng rank benefit trước
         var totalFoodPrice = window.totalFoodPrice;
 
+        // Debug log
         console.log('Original Total:', originalTotal);
         console.log('Total Food Price:', totalFoodPrice);
 
@@ -430,6 +431,7 @@
         var afterRank = originalTotal - discountAmount;
         if (afterRank < 0) afterRank = 0;
 
+        // Debug log
         console.log('Rank Discount Percent:', discountPercent);
         console.log('Rank Discount Amount:', discountAmount);
         console.log('After Rank Discount:', afterRank);
@@ -449,6 +451,7 @@
         var afterVoucher = afterPromotion - voucherAmount;
         if (afterVoucher < 0) afterVoucher = 0;
 
+        // Debug log
         console.log('Voucher Amount:', voucherAmount);
         console.log('After Voucher:', afterVoucher);
         console.log('Selected Voucher:', selectedVoucher);
@@ -460,6 +463,7 @@
         var finalSeatPrice = afterVoucher - savings;
         if (finalSeatPrice < 0) finalSeatPrice = 0;
 
+        // Debug log
         console.log('Use Score:', useScore);
         console.log('Savings:', savings);
         console.log('Final Seat Price:', finalSeatPrice);
@@ -467,6 +471,7 @@
         // Tổng cuối cùng = seat price + food price
         var finalTotal = finalSeatPrice + totalFoodPrice;
 
+        // Debug log
         console.log('Final Total:', finalTotal);
         console.log('Expected calculation:');
         console.log('  Original Total:', originalTotal);

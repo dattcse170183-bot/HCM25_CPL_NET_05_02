@@ -603,12 +603,12 @@ namespace MovieTheater.Controllers
             // Apply status filter
             if (!string.IsNullOrEmpty(statusFilter))
             {
-                if (statusFilter == "paid")
+                if (statusFilter == "completed")
                     invoices = invoices.Where(b => b.Status == InvoiceStatus.Completed && !b.Cancel).ToList();
                 else if (statusFilter == "cancelled")
-                    invoices = invoices.Where(b => (b.Status == InvoiceStatus.Completed && b.Cancel) || b.Status == null).ToList();
-                else if (statusFilter == "unpaid")
-                    invoices = invoices.Where(b => b.Status == InvoiceStatus.Incomplete).ToList();
+                    invoices = invoices.Where(b => b.Status == InvoiceStatus.Completed && b.Cancel).ToList();
+                else if (statusFilter == "notpaid")
+                    invoices = invoices.Where(b => b.Status != InvoiceStatus.Completed).ToList();
             }
 
             // Apply booking type filter
@@ -681,9 +681,9 @@ namespace MovieTheater.Controllers
 
             // Calculate statistics
             var totalBookings = totalCount;
-            var paid = invoices.Count(b => b.Status == InvoiceStatus.Completed && !b.Cancel);
-            var cancelled = invoices.Count(b => (b.Status == InvoiceStatus.Completed && b.Cancel) || b.Status == null);
-            var unpaid = invoices.Count(b => b.Status == InvoiceStatus.Incomplete);
+            var completed = invoices.Count(b => b.Status == InvoiceStatus.Completed && !b.Cancel);
+            var cancelled = invoices.Count(b => b.Status == InvoiceStatus.Completed && b.Cancel);
+            var notPaid = invoices.Count(b => b.Status != InvoiceStatus.Completed);
 
             var result = pagedInvoices.Select(i => new
             {
@@ -693,7 +693,7 @@ namespace MovieTheater.Controllers
                 identityCard = i.Account?.IdentityCard ?? "N/A",
                 phoneNumber = i.Account?.PhoneNumber ?? "N/A",
                 scheduleTime = i.MovieShow?.Schedule?.ScheduleTime?.ToString() ?? "N/A",
-                status = i.Status == InvoiceStatus.Completed ? "Completed" : i.Status == InvoiceStatus.Incomplete ? "Incomplete" : null,
+                status = i.Status,
                 cancel = i.Cancel,
                 employeeId = i.EmployeeId
             }).ToList();
@@ -714,9 +714,9 @@ namespace MovieTheater.Controllers
                 statistics = new
                 {
                     totalBookings = totalBookings,
-                    paid = paid,
+                    completed = completed,
                     cancelled = cancelled,
-                    unpaid = unpaid
+                    notPaid = notPaid
                 }
             });
         }

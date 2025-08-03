@@ -1,0 +1,59 @@
+name: SonarQube Analysis
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+      - quality-gate
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  sonarqube:
+    name: SonarQube Analysis
+    runs-on: windows-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+          
+      - name: Restore dependencies
+        run: dotnet restore
+        
+      - name: Build
+        run: dotnet build --no-restore
+        
+      - name: Run tests with coverage
+        shell: powershell
+        run: |
+          dotnet test MovieTheater.Tests --collect:"XPlat Code Coverage" --results-directory "TestResults" --configuration Release --logger "console;verbosity=minimal"
+          
+      - name: Check coverage files
+        shell: powershell
+        run: |
+          Write-Host "Checking for coverage files..."
+          Get-ChildItem -Path TestResults -Recurse -Filter "*.xml" | ForEach-Object { Write-Host "Found: $($_.FullName)" }
+          
+      - name: Install SonarQube Scanner
+        shell: powershell
+        run: |
+          dotnet tool install --global dotnet-sonarscanner
+          
+      - name: Build and analyze with SonarQube
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        shell: powershell
+        run: |
+          Write-Host "Starting SonarQube analysis..."
+          dotnet sonarscanner begin /k:"DreamFog20_HCM25_CPL_NET_05" /o:"dreamfog20" /d:sonar.token="$env:SONAR_TOKEN" /d:sonar.host.url="https://sonarcloud.io" /d:sonar.cs.opencover.reportsPaths="TestResults/**/coverage.opencover.xml" /d:sonar.cs.cobertura.reportPaths="TestResults/**/coverage.cobertura.xml"
+          Write-Host "Building project..."
+          dotnet build
+          Write-Host "Ending SonarQube analysis..."
+          dotnet sonarscanner end /d:sonar.token="$env:SONAR_TOKEN" 

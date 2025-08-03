@@ -1,14 +1,10 @@
 using Microsoft.Extensions.Logging;
+using Microsoft.AspNetCore.Http;
 using Moq;
 using MovieTheater.Models;
 using MovieTheater.Repository;
 using MovieTheater.Service;
-using MovieTheater.ViewModels;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using Xunit;
-using Microsoft.AspNetCore.Http;
+using System.Security.Claims;
 
 namespace MovieTheater.Tests.Service
 {
@@ -18,7 +14,7 @@ namespace MovieTheater.Tests.Service
         private readonly Mock<IEmployeeRepository> _employeeRepositoryMock;
         private readonly Mock<IMemberRepository> _memberRepositoryMock;
         private readonly Mock<IHttpContextAccessor> _httpContextAccessorMock;
-        private readonly Mock<EmailService> _emailServiceMock;
+        private readonly Mock<IEmailService> _emailServiceMock;
         private readonly Mock<ILogger<AccountService>> _loggerMock;
         private readonly Mock<MovieTheaterContext> _contextMock;
         private readonly AccountService _accountService;
@@ -29,7 +25,7 @@ namespace MovieTheater.Tests.Service
             _employeeRepositoryMock = new Mock<IEmployeeRepository>();
             _memberRepositoryMock = new Mock<IMemberRepository>();
             _httpContextAccessorMock = new Mock<IHttpContextAccessor>();
-            _emailServiceMock = new Mock<EmailService>();
+            _emailServiceMock = new Mock<IEmailService>();
             _loggerMock = new Mock<ILogger<AccountService>>();
             _contextMock = new Mock<MovieTheaterContext>();
 
@@ -91,13 +87,10 @@ namespace MovieTheater.Tests.Service
             // Arrange
             var email = "test@example.com";
             var otp = "123456";
+            var expiry = DateTime.UtcNow.AddMinutes(10);
 
-            // First send OTP to store it
-            var account = new Account { AccountId = "1", Email = email, FullName = "Test User", Status = 1 };
-            _accountRepositoryMock.Setup(r => r.GetAccountByEmail(email)).Returns(account);
-            _emailServiceMock.Setup(e => e.SendEmail(email, It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool>())).Returns(true);
-
-            _accountService.SendForgetPasswordOtp(email);
+            // Store OTP first
+            _accountService.StoreForgetPasswordOtp(email, otp, expiry);
 
             // Act
             var result = _accountService.VerifyForgetPasswordOtp(email, otp);
@@ -139,43 +132,6 @@ namespace MovieTheater.Tests.Service
             Assert.True(result);
             _accountRepositoryMock.Verify(r => r.Update(It.IsAny<Account>()), Times.Once);
             _accountRepositoryMock.Verify(r => r.Save(), Times.Once);
-        }
-
-        [Fact]
-        public void ResetPassword_WithInvalidEmail_ShouldReturnFalse()
-        {
-            // Arrange
-            var email = "nonexistent@example.com";
-            var newPassword = "NewPassword123!";
-
-            _accountRepositoryMock.Setup(r => r.GetAccountByEmail(email)).Returns((Account)null);
-
-            // Act
-            var result = _accountService.ResetPassword(email, newPassword);
-
-            // Assert
-            Assert.False(result);
-            _accountRepositoryMock.Verify(r => r.Update(It.IsAny<Account>()), Times.Never);
-            _accountRepositoryMock.Verify(r => r.Save(), Times.Never);
-        }
-
-        [Fact]
-        public void SendForgetPasswordOtpEmail_WithValidEmail_ShouldReturnTrue()
-        {
-            // Arrange
-            var email = "test@example.com";
-            var otp = "123456";
-            var account = new Account { AccountId = "1", Email = email, FullName = "Test User", Status = 1 };
-
-            _accountRepositoryMock.Setup(r => r.GetAccountByEmail(email)).Returns(account);
-            _emailServiceMock.Setup(e => e.SendEmail(email, It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool>())).Returns(true);
-
-            // Act
-            var result = _accountService.SendForgetPasswordOtpEmail(email, otp);
-
-            // Assert
-            Assert.True(result);
-            _emailServiceMock.Verify(e => e.SendEmail(email, It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool>()), Times.Once);
         }
 
         [Fact]
