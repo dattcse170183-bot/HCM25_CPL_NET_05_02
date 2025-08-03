@@ -65,7 +65,7 @@ jobs:
           }
           
           try {
-            dotnet sonarscanner begin /k:"DreamFog20_HCM25_CPL_NET_05" /o:"dreamfog20" /d:sonar.token="$env:SONAR_TOKEN" /d:sonar.host.url="https://sonarcloud.io" /d:sonar.cs.opencover.reportsPaths="TestResults/**/coverage.opencover.xml" /d:sonar.cs.cobertura.reportPaths="TestResults/**/coverage.cobertura.xml" /d:sonar.sources="Controllers,Service,Repository,Models,ViewModels,Program.cs" /d:sonar.exclusions="**/MovieTheater.Tests/**,**/bin/**,**/obj/**,**/*.cshtml,**/*.js,**/*.css,**/TestResults/**" /d:sonar.test.inclusions="**/MovieTheater.Tests/**/*.cs"
+            dotnet sonarscanner begin /k:"DreamFog20_HCM25_CPL_NET_05" /o:"dreamfog20" /d:sonar.token="$env:SONAR_TOKEN" /d:sonar.host.url="https://sonarcloud.io" /d:sonar.cs.opencover.reportsPaths="TestResults/**/coverage.opencover.xml" /d:sonar.cs.cobertura.reportPaths="TestResults/**/coverage.cobertura.xml" /d:sonar.sources="." /d:sonar.exclusions="**/MovieTheater.Tests/**,**/bin/**,**/obj/**,**/*.cshtml,**/*.js,**/*.css,**/TestResults/**" /d:sonar.test.inclusions="**/MovieTheater.Tests/**/*.cs"
             Write-Host "Building project with SonarQube..."
             dotnet build --configuration Release
             Write-Host "Ending SonarQube analysis..."
