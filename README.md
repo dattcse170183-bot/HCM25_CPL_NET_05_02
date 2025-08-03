@@ -1,0 +1,1 @@
+# Test SonarQube Coverage Fix
