@@ -64,11 +64,9 @@ MovieTheater.Tests/TestResults/
 coverage-report/
 coverage-history/
 
-# Coverage files
+# Coverage files (local only - allow CI/CD to generate)
 *.coverage
 *.coveragexml
-*.opencover.xml
-*.cobertura.xml
 
 # Temporary files
 *.tmp
