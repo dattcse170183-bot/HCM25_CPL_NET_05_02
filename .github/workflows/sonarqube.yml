@@ -30,9 +30,17 @@ jobs:
       - name: Build
         run: dotnet build --no-restore
         
-      - name: Run tests
-        run: dotnet test MovieTheater.Tests --logger "console;verbosity=minimal"
-        
+      - name: Run tests with coverage
+        shell: powershell
+        run: |
+          dotnet test MovieTheater.Tests --collect:"XPlat Code Coverage" --results-directory "TestResults" --configuration Release --logger "console;verbosity=minimal"
+          
+      - name: Check coverage files
+        shell: powershell
+        run: |
+          Write-Host "Checking for coverage files..."
+          Get-ChildItem -Path TestResults -Recurse -Filter "*.xml" | ForEach-Object { Write-Host "Found: $($_.FullName)" }
+          
       - name: Install SonarQube Scanner
         shell: powershell
         run: |
