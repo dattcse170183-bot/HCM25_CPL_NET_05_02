@@ -498,9 +498,9 @@ namespace MovieTheater.Tests.Repository
                 SeatLength = 3,
                 SeatWidth = 3
             };
-            context.CinemaRooms.Add(newRoom);
 
             // Act
+            repository.Add(newRoom);
             await repository.Save();
 
             // Assert
