@@ -5,9 +5,9 @@ namespace MovieTheater.Service
     // Thêm model filter voucher
     public class VoucherFilterModel
     {
-        public string Keyword { get; set; }
-        public string StatusFilter { get; set; }
-        public string ExpiryFilter { get; set; }
+        public string? Keyword { get; set; }
+        public string? StatusFilter { get; set; }
+        public string? ExpiryFilter { get; set; }
     }
 
     public interface IVoucherService
