@@ -104,7 +104,7 @@ namespace MovieTheater
             builder.Services.AddScoped<ISeatService, SeatService>();
             builder.Services.AddScoped<ISeatTypeRepository, SeatTypeRepository>();
             builder.Services.AddScoped<ISeatTypeService, SeatTypeService>();
-            builder.Services.AddScoped<EmailService>();
+            builder.Services.AddScoped<IEmailService, EmailService>();
             builder.Services.AddScoped<ICoupleSeatRepository, CoupleSeatRepository>();
             builder.Services.AddScoped<ICoupleSeatService, CoupleSeatService>();
             builder.Services.AddScoped<IVNPayService, VNPayService>();
