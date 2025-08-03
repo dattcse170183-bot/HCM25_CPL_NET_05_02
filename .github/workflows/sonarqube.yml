@@ -33,7 +33,7 @@ jobs:
       - name: Run tests with coverage
         shell: powershell
         run: |
-          dotnet test MovieTheater.Tests --collect:"XPlat Code Coverage" --results-directory "TestResults" --configuration Release --logger "console;verbosity=minimal"
+          dotnet test MovieTheater.Tests --settings coverlet.runsettings --results-directory "TestResults" --configuration Release --logger "console;verbosity=minimal"
           
       - name: Check coverage files
         shell: powershell
