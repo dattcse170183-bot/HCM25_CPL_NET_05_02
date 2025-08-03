@@ -19,10 +19,10 @@ jobs:
         shell: powershell
         run: |
           Write-Host "=== Testing SONAR_TOKEN ==="
-          Write-Host "Token exists: $(${{ secrets.SONAR_TOKEN }} -ne '')"
-          Write-Host "Token length: $(${{ secrets.SONAR_TOKEN }}.Length)"
+          Write-Host "Token exists: $($env:SONAR_TOKEN -ne '')"
+          Write-Host "Token length: $($env:SONAR_TOKEN.Length)"
           
-          if (${{ secrets.SONAR_TOKEN }} -eq '') {
+          if ($env:SONAR_TOKEN -eq '') {
             Write-Host "ERROR: SONAR_TOKEN is empty!"
             exit 1
           } else {
@@ -39,7 +39,7 @@ jobs:
           # Test with curl (if available)
           try {
             $response = Invoke-RestMethod -Uri "https://sonarcloud.io/api/authentication/validate" -Headers @{
-              "Authorization" = "Bearer ${{ secrets.SONAR_TOKEN }}"
+              "Authorization" = "Bearer $env:SONAR_TOKEN"
             } -Method GET
             Write-Host "SUCCESS: Token is valid"
             Write-Host "Response: $response"

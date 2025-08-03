@@ -22,21 +22,10 @@ jobs:
         shell: powershell
         run: |
           Write-Host "=== Environment Check ==="
-          Write-Host "SONAR_TOKEN exists: ${{ secrets.SONAR_TOKEN != '' }}"
+          Write-Host "SONAR_TOKEN exists: $($env:SONAR_TOKEN -ne '')"
           Write-Host "Current directory: $(Get-Location)"
           Write-Host "Files in current directory:"
           Get-ChildItem | ForEach-Object { Write-Host "  $($_.Name)" }
-          
-      - name: Check sonar-project.properties
-        shell: powershell
-        run: |
-          Write-Host "=== SonarQube Config Check ==="
-          if (Test-Path "sonar-project.properties") {
-            Write-Host "sonar-project.properties found:"
-            Get-Content "sonar-project.properties"
-          } else {
-            Write-Host "ERROR: sonar-project.properties not found!"
-          }
           
       - name: Install SonarQube Scanner
         shell: powershell
@@ -51,11 +40,11 @@ jobs:
         shell: powershell
         run: |
           Write-Host "=== Testing SonarQube Scanner ==="
-          Write-Host "Token length: $(${{ secrets.SONAR_TOKEN }}.Length)"
+          Write-Host "Token length: $($env:SONAR_TOKEN.Length)"
           
           # Test begin command
           Write-Host "Testing begin command..."
-          dotnet sonarscanner begin /k:"DreamFog20_HCM25_CPL_NET_05" /o:"dreamfog20" /d:sonar.token="${{ secrets.SONAR_TOKEN }}" /d:sonar.host.url="https://sonarcloud.io"
+          dotnet sonarscanner begin /k:"DreamFog20_HCM25_CPL_NET_05" /o:"dreamfog20" /d:sonar.token="$env:SONAR_TOKEN" /d:sonar.host.url="https://sonarcloud.io"
           
           # Build project
           Write-Host "Building project..."
@@ -63,6 +52,6 @@ jobs:
           
           # Test end command
           Write-Host "Testing end command..."
-          dotnet sonarscanner end /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
+          dotnet sonarscanner end /d:sonar.token="$env:SONAR_TOKEN"
           
           Write-Host "SonarQube scanner test completed" 
