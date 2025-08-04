@@ -68,6 +68,18 @@ coverage-history/
 *.coverage
 *.coveragexml
 
+# Secrets and sensitive files
+appsettings.Production.json
+appsettings.Staging.json
+*.key
+*.pem
+*.p12
+*.pfx
+secrets.json
+.env
+.env.local
+.env.production
+
 # Temporary files
 *.tmp
 *.temp
