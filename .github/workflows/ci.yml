@@ -1,23 +1,40 @@
-name: .NET Build & Publish
+name: CI/CD Pipeline
 
 on:
   push:
-    branches: [ quality-gate ]
+    branches: [ main, develop, new-repository-setup ]
   pull_request:
-    branches: [ quality-gate ]
+    branches: [ main ]
 
 jobs:
-  build:
-    runs-on: windows-latest
+  test:
+    runs-on: ubuntu-latest
+    
     steps:
-      - uses: actions/checkout@v3
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: '8.0.x'
-      - name: Restore dependencies
-        run: dotnet restore
-      - name: Build
-        run: dotnet build --no-restore
-      - name: Publish
-        run: dotnet publish -c Release -o ./publish --no-restore 
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Setup .NET 8
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: 8.0.x
+    
+    - name: Restore dependencies
+      run: dotnet restore
+    
+    - name: Build
+      run: dotnet build --no-restore --configuration Release
+    
+    - name: Test
+      run: dotnet test MovieTheater.Tests --no-build --verbosity normal --configuration Release
+    
+    - name: Test with coverage
+      run: dotnet test MovieTheater.Tests --settings coverlet.runsettings --results-directory "TestResults" --configuration Release
+    
+    - name: Upload test results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: test-results
+        path: TestResults/
+        retention-days: 30 
