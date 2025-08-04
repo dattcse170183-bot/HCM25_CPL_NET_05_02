@@ -1,0 +1,51 @@
+name: SonarQube Analysis
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  sonarqube:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+    
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '8.0.x'
+    
+    - name: Install SonarQube Scanner
+      run: |
+        wget https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-4.8.0.2856-linux.zip
+        unzip sonar-scanner-cli-4.8.0.2856-linux.zip
+        sudo mv sonar-scanner-4.8.0.2856-linux /opt/sonar-scanner
+        echo "$GITHUB_WORKSPACE/opt/sonar-scanner/bin" >> $GITHUB_PATH
+    
+    - name: Restore dependencies
+      run: dotnet restore
+    
+    - name: Build
+      run: dotnet build --no-restore
+    
+    - name: Run tests with coverage
+      run: |
+        dotnet test --collect:"XPlat Code Coverage" --results-directory ./coverage/
+    
+    - name: SonarQube Analysis
+      env:
+        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      run: |
+        sonar-scanner \
+          -Dsonar.projectKey=dattcse170183-bot_FINAL_PROJECT_OJT \
+          -Dsonar.organization=dattcse170183-bot \
+          -Dsonar.host.url=https://sonarcloud.io \
+          -Dsonar.login=$SONAR_TOKEN \
+          -Dsonar.sources=. \
+          -Dsonar.exclusions=**/bin/**,**/obj/**,**/TestResults/**,**/coverage/** \
+          -Dsonar.cs.opencover.reportsPaths=./coverage/*/coverage.opencover.xml 
