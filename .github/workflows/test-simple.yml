@@ -1,0 +1,49 @@
+name: Simple Test
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  workflow_dispatch: # Cho phép chạy thủ công
+
+jobs:
+  simple-test:
+    name: Simple Test
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '8.0.x'
+
+    - name: Restore dependencies
+      run: dotnet restore
+
+    - name: Build project
+      run: dotnet build --configuration Release
+
+    - name: Run tests
+      run: dotnet test --configuration Release --verbosity normal
+
+    - name: Show project structure
+      run: |
+        echo "=== PROJECT STRUCTURE ==="
+        find . -name "*.csproj" -type f
+        echo ""
+        echo "=== TEST PROJECTS ==="
+        find . -name "*Tests.csproj" -type f
+        echo ""
+        echo "=== MAIN PROJECT FILES ==="
+        ls -la *.csproj
+
+    - name: Show test results
+      run: |
+        echo "=== TEST COMPLETED ==="
+        echo "Build: ✅ SUCCESS"
+        echo "Tests: ✅ SUCCESS"
+        echo "Ready for SonarQube analysis!" 

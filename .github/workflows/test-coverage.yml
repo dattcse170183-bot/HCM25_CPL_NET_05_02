@@ -1,0 +1,54 @@
+name: Test Coverage
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  test-coverage:
+    name: Test Coverage
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '8.0.x'
+
+    - name: Cache .NET packages
+      uses: actions/cache@v3
+      with:
+        path: ~/.nuget/packages
+        key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
+        restore-keys: |
+          ${{ runner.os }}-nuget-
+
+    - name: Restore dependencies
+      run: dotnet restore
+
+    - name: Build project
+      run: dotnet build --configuration Release
+
+    - name: Run tests with coverage
+      run: |
+        dotnet test --configuration Release --collect:"XPlat Code Coverage" --results-directory TestResults --verbosity normal
+
+    - name: Upload coverage reports
+      uses: actions/upload-artifact@v3
+      with:
+        name: coverage-reports
+        path: TestResults/
+        retention-days: 30
+
+    - name: Display coverage summary
+      run: |
+        echo "=== COVERAGE REPORTS ==="
+        find TestResults -name "*.xml" -type f | while read file; do
+          echo "Found coverage file: $file"
+          echo "File size: $(stat -c%s "$file") bytes"
+        done 

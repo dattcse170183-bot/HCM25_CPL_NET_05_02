@@ -1,0 +1,49 @@
+name: Basic Test
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  workflow_dispatch: # Cho phép chạy thủ công
+
+jobs:
+  basic-test:
+    name: Basic Test
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '8.0.x'
+
+    - name: Show project structure
+      run: |
+        echo "=== PROJECT STRUCTURE ==="
+        find . -name "*.csproj" -type f
+        echo ""
+        echo "=== MAIN FILES ==="
+        ls -la *.csproj
+        echo ""
+        echo "=== GITHUB WORKFLOWS ==="
+        find .github/workflows -name "*.yml" -type f
+
+    - name: Test dotnet restore
+      run: dotnet restore
+
+    - name: Test dotnet build
+      run: dotnet build --configuration Release --verbosity minimal
+
+    - name: Show success message
+      run: |
+        echo "=== BASIC TEST COMPLETED ==="
+        echo "✅ Project structure: OK"
+        echo "✅ Restore: OK"
+        echo "✅ Build: OK"
+        echo ""
+        echo "🚀 Ready for GitHub Actions!"
+        echo "💡 Next step: Add SONAR_TOKEN secret for SonarQube analysis" 
