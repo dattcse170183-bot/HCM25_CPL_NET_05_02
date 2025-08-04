@@ -1,94 +1,39 @@
-﻿# Visual Studio
-.vs/
-*.user
-*.suo
-*.userosscache
-*.sln.docstates
-
-# Build results
+﻿# .NET
 bin/
 obj/
-MovieTheater.Tests/bin/
-MovieTheater.Tests/obj/
+*.user
+*.suo
+*.cache
+*.dll
+*.exe
+*.pdb
 
 # Logs
-*.log
 Logs/
-
-# Rider/JetBrains IDE files
-.idea/
-
-# User-specific files
-*.rsuser
-*.sln.ide
-
-# DotNet core
-project.lock.json
-project.fragment.lock.json
-artifacts/
-
-# ASP.NET Scaffolding
-ScaffoldingReadMe.txt
-
-# npm/Yarn package folders
-node_modules/
-.yarn/
-
-# npm/Yarn debug logs
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-
-# Visual Studio Code settings folder
-.vscode/
-
-# Mac/Windows system files
-.DS_Store
-Thumbs.db
-
-# Coverage reports
-coverage-report/
-coverage-history/
-
-# Windows system files
-Thumbs.db
-
-
-# Test results
-TestResults/
-MovieTheater.Tests/TestResults/
-
-# SonarQube analysis files
-.sonar/
-.sonarqube/
-coverage-report/
-coverage-history/
-
-# Coverage files (local only - allow CI/CD to generate)
-*.coverage
-*.coveragexml
+*.log
 
 # Secrets and sensitive files
 appsettings.Production.json
-appsettings.Staging.json
+appsettings.Local.json
 *.key
 *.pem
-*.p12
 *.pfx
-secrets.json
-.env
-.env.local
-.env.production
+
+# IDE
+.vs/
+.vscode/
+*.sln.docstates
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Test results
+TestResults/
+coverage/
+*.coverage
+*.coveragexml
 
 # Temporary files
 *.tmp
 *.temp
-
-# Ignore coverage reports
-coverage-report/
-coverage-history/
-
-# SonarQube specific
-.sonar/
-.sonarqube/
-sonar-project.properties.local
